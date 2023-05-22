@@ -30,6 +30,25 @@ async function run() {
     const photoCollection = client.db('toyUniverse').collection('photos')
     const addToyCollection = client.db('toyUniverse').collection('addToys')
 
+//search indexing create
+const indexKeys = {toyName: 1};
+const indexOptions = {name:"searchName"}
+const result =await addToyCollection.createIndex(indexKeys, indexOptions)
+
+app.get("/toySearchByText/:text", async (req, res) => {
+  const searchText = req.params.text;
+  const result = await addToyCollection.find({
+      $or: [
+        { toyName: { $regex: searchText, $options: "i" } }
+     
+        
+      ],
+    })
+    .toArray();
+  res.send(result);
+});
+
+
     app.get('/photos', async(req, res) =>{
         const cursor = photoCollection.find()
         const result = await cursor.toArray()
@@ -48,7 +67,7 @@ async function run() {
 
     //receive add toys data from mongodb
     app.get('/addToys', async(req, res) =>{
-      const cursor = addToyCollection.find()
+      const cursor = addToyCollection.find().limit(20)
       const result = await cursor.toArray()
       res.send(result)
   })
@@ -95,6 +114,12 @@ async function run() {
     const result = await addToyCollection.deleteOne(query);
     res.send(result)
   })
+
+
+
+  //tab category
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
